@@ -46,8 +46,8 @@ func TestReconcileClusterIngress_Insert(t *testing.T) {
 			Namespace: "test-ns",
 		},
 	}
-	ci := newTestClusterIngress(t, r)
-	if _, err := c.reconcileClusterIngress(TestContextWithLogger(t), r, ci); err != nil {
+	ci := newTestIngress(t, r)
+	if _, err := c.reconcileIngress(TestContextWithLogger(t), r, ci); err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	created := getRouteIngressFromClient(t, servingClient, r)
@@ -65,8 +65,8 @@ func TestReconcileClusterIngress_Update(t *testing.T) {
 		},
 	}
 
-	ci := newTestClusterIngress(t, r)
-	if _, err := c.reconcileClusterIngress(TestContextWithLogger(t), r, ci); err != nil {
+	ci := newTestIngress(t, r)
+	if _, err := c.reconcileIngress(TestContextWithLogger(t), r, ci); err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
@@ -77,8 +77,8 @@ func TestReconcileClusterIngress_Update(t *testing.T) {
 		Scheme: "http",
 		Host:   "bar.com",
 	}
-	ci2 := newTestClusterIngress(t, r)
-	if _, err := c.reconcileClusterIngress(TestContextWithLogger(t), r, ci2); err != nil {
+	ci2 := newTestIngress(t, r)
+	if _, err := c.reconcileIngress(TestContextWithLogger(t), r, ci2); err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
@@ -156,7 +156,7 @@ func newTestClusterIngress(t *testing.T, r *v1alpha1.Route) *netv1alpha1.Cluster
 			},
 			Active: true,
 		}}}}
-	tls := []netv1alpha1.ClusterIngressTLS{
+	tls := []netv1alpha1.IngressTLS{
 		{
 			Hosts:             []string{"test-route.test-ns.example.com"},
 			PrivateKey:        "tls.key",
@@ -166,6 +166,31 @@ func newTestClusterIngress(t *testing.T, r *v1alpha1.Route) *netv1alpha1.Cluster
 		},
 	}
 	ingress, err := resources.MakeClusterIngress(getContext(), r, tc, tls, "foo-ingress")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	return ingress
+}
+
+func newTestIngress(t *testing.T, r *v1alpha1.Route) *netv1alpha1.Ingress {
+	tc := &traffic.Config{Targets: map[string]traffic.RevisionTargets{
+		traffic.DefaultTarget: {{
+			TrafficTarget: v1beta1.TrafficTarget{
+				RevisionName: "revision",
+				Percent:      100,
+			},
+			Active: true,
+		}}}}
+	tls := []netv1alpha1.IngressTLS{
+		{
+			Hosts:             []string{"test-route.test-ns.example.com"},
+			PrivateKey:        "tls.key",
+			SecretName:        "test-secret",
+			SecretNamespace:   "test-ns",
+			ServerCertificate: "tls.crt",
+		},
+	}
+	ingress, err := resources.MakeIngress(getContext(), r, tc, tls, "foo-ingress")
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}

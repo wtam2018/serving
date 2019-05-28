@@ -110,8 +110,14 @@ data:
     # Controls the behavior of the HTTP endpoint for the Knative ingress.
     # It requires autoTLS to be enabled.
     # 1. Enabled: The Knative ingress will be able to serve HTTP connection.
-    # 2. Disabled: The Knative ingress ter will reject HTTP traffic.
+    # 2. Disabled: The Knative ingress will reject HTTP traffic.
     # 3. Redirected: The Knative ingress will send a 302 redirect for all
     # http connections, asking the clients to use HTTPS
     httpProtocol: "Enabled"
+
+    # Controls to switch beetween namespaced ingresses and cluster ingress
+    # implenementations.  The default is namedspaced ingresses.
+    # 1. Ewnabled: ClusterIngress implemenation is enabled.
+    # 2. Disabled: ClusterIngress implematation is disabled.
+    clusterIngress: "Disabled"
 

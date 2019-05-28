@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func TestIngressSpecValidation(t *testing.T) {
+func TestClusterIngressSpecValidation(t *testing.T) {
 	tests := []struct {
 		name string
 		cis  *IngressSpec
@@ -33,16 +33,16 @@ func TestIngressSpecValidation(t *testing.T) {
 	}{{
 		name: "valid",
 		cis: &IngressSpec{
-			TLS: []ClusterIngressTLS{{
+			TLS: []IngressTLS{{
 				SecretNamespace: "secret-space",
 				SecretName:      "secret-name",
 			}},
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "revision-000",
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
@@ -63,7 +63,7 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-rule",
 		cis: &IngressSpec{
-			TLS: []ClusterIngressTLS{{
+			TLS: []IngressTLS{{
 				SecretName:      "secret-name",
 				SecretNamespace: "secret-namespace",
 			}},
@@ -72,13 +72,13 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "empty-rule",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{}},
+			Rules: []IngressRule{{}},
 		},
 		want: apis.ErrMissingField("rules[0]"),
 	}, {
 		name: "missing-http",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
 			}},
 		},
@@ -86,19 +86,19 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-http-paths",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP:  &HTTPClusterIngressRuleValue{},
+				HTTP:  &HTTPIngressRuleValue{},
 			}},
 		},
 		want: apis.ErrMissingField("rules[0].http.paths"),
 	}, {
 		name: "empty-http-paths",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{}},
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{}},
 				},
 			}},
 		},
@@ -106,12 +106,12 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "backend-wrong-percentage",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "revision-000",
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
@@ -126,11 +126,11 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-split",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{},
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{},
 						AppendHeaders: map[string]string{
 							"foo": "bar",
 						},
@@ -142,11 +142,11 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "empty-split",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{}},
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{}},
 						AppendHeaders: map[string]string{
 							"foo": "bar",
 						},
@@ -158,13 +158,13 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-split-backend",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{},
-							Percent:               100,
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{},
+							Percent:        100,
 						}},
 					}},
 				},
@@ -174,12 +174,12 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-backend-name",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
 							},
@@ -192,12 +192,12 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-backend-namespace",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName: "service-name",
 								ServicePort: intstr.FromInt(8080),
 							},
@@ -210,12 +210,12 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-backend-port",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "service-name",
 								ServiceNamespace: "default",
 							},
@@ -228,12 +228,12 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "split-percent-sum-not-100",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "revision-000",
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
@@ -251,12 +251,12 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "wrong-retry-attempts",
 		cis: &IngressSpec{
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "revision-000",
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
@@ -273,13 +273,13 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "empty-tls",
 		cis: &IngressSpec{
-			TLS: []ClusterIngressTLS{{}},
-			Rules: []ClusterIngressRule{{
+			TLS: []IngressTLS{{}},
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "revision-000",
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
@@ -293,15 +293,15 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-tls-secret-namespace",
 		cis: &IngressSpec{
-			TLS: []ClusterIngressTLS{{
+			TLS: []IngressTLS{{
 				SecretName: "secret",
 			}},
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "revision-000",
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
@@ -315,15 +315,15 @@ func TestIngressSpecValidation(t *testing.T) {
 	}, {
 		name: "missing-tls-secret-name",
 		cis: &IngressSpec{
-			TLS: []ClusterIngressTLS{{
+			TLS: []IngressTLS{{
 				SecretNamespace: "secret-space",
 			}},
-			Rules: []ClusterIngressRule{{
+			Rules: []IngressRule{{
 				Hosts: []string{"example.com"},
-				HTTP: &HTTPClusterIngressRuleValue{
-					Paths: []HTTPClusterIngressPath{{
-						Splits: []ClusterIngressBackendSplit{{
-							ClusterIngressBackend: ClusterIngressBackend{
+				HTTP: &HTTPIngressRuleValue{
+					Paths: []HTTPIngressPath{{
+						Splits: []IngressBackendSplit{{
+							IngressBackend: IngressBackend{
 								ServiceName:      "revision-000",
 								ServiceNamespace: "default",
 								ServicePort:      intstr.FromInt(8080),
@@ -354,16 +354,16 @@ func TestClusterIngressValidation(t *testing.T) {
 		name: "valid",
 		ci: &ClusterIngress{
 			Spec: IngressSpec{
-				TLS: []ClusterIngressTLS{{
+				TLS: []IngressTLS{{
 					SecretNamespace: "secret-space",
 					SecretName:      "secret-name",
 				}},
-				Rules: []ClusterIngressRule{{
+				Rules: []IngressRule{{
 					Hosts: []string{"example.com"},
-					HTTP: &HTTPClusterIngressRuleValue{
-						Paths: []HTTPClusterIngressPath{{
-							Splits: []ClusterIngressBackendSplit{{
-								ClusterIngressBackend: ClusterIngressBackend{
+					HTTP: &HTTPIngressRuleValue{
+						Paths: []HTTPIngressPath{{
+							Splits: []IngressBackendSplit{{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-000",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),

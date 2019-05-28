@@ -1905,7 +1905,7 @@ func TestReconcile(t *testing.T) {
 
 func TestReconcile_EnableAutoTLS(t *testing.T) {
 	table := TableTest{{
-		Name: "check that Certificate and ClusterIngressTLS are correctly configured when creating a Route",
+		Name: "check that Certificate and IngressTLS are correctly configured when creating a Route",
 		Objects: []runtime.Object{
 			route("default", "becomes-ready", WithConfigTarget("config"), WithRouteUID("12-34")),
 			cfg("default", "config",
@@ -1931,7 +1931,7 @@ func TestReconcile_EnableAutoTLS(t *testing.T) {
 						}},
 					},
 				},
-				[]netv1alpha1.ClusterIngressTLS{
+				[]netv1alpha1.IngressTLS{
 					{
 						Hosts:           []string{"becomes-ready.default.example.com"},
 						SecretName:      "route-12-34",
@@ -1968,7 +1968,7 @@ func TestReconcile_EnableAutoTLS(t *testing.T) {
 		Key:                     "default/becomes-ready",
 		SkipNamespaceValidation: true,
 	}, {
-		Name: "check that Certificate and ClusterIngressTLS are correctly updated when updating a Route",
+		Name: "check that Certificate and IngressTLS are correctly updated when updating a Route",
 		Objects: []runtime.Object{
 			route("default", "becomes-ready", WithConfigTarget("config"), WithRouteUID("12-34")),
 			cfg("default", "config",
@@ -2006,7 +2006,7 @@ func TestReconcile_EnableAutoTLS(t *testing.T) {
 						}},
 					},
 				},
-				[]netv1alpha1.ClusterIngressTLS{
+				[]netv1alpha1.IngressTLS{
 					{
 						Hosts:           []string{"becomes-ready.default.example.com"},
 						SecretName:      "route-12-34",
@@ -2120,7 +2120,7 @@ func simplePlaceholderK8sService(ctx context.Context, r *v1alpha1.Route, targetN
 func simpleK8sService(r *v1alpha1.Route, so ...K8sServiceOption) *corev1.Service {
 	// omit the error here, as we are sure the loadbalancer info is porvided.
 	// return the service instance only, so that the result can be used in TableRow.
-	svc, _ := resources.MakeK8sService(r, "", &netv1alpha1.ClusterIngress{Status: readyIngressStatus()})
+	svc, _ := resources.MakeK8sService(r, "", &netv1alpha1.Ingress{Status: readyIngressStatus()})
 
 	for _, opt := range so {
 		opt(svc)
@@ -2143,7 +2143,7 @@ func ingressWithClass(r *v1alpha1.Route, tc *traffic.Config, class string, io ..
 	return ingress
 }
 
-func ingressWithTLS(r *v1alpha1.Route, tc *traffic.Config, tls []netv1alpha1.ClusterIngressTLS, io ...ClusterIngressOption) *netv1alpha1.ClusterIngress {
+func ingressWithTLS(r *v1alpha1.Route, tc *traffic.Config, tls []netv1alpha1.IngressTLS, io ...ClusterIngressOption) *netv1alpha1.ClusterIngress {
 	ingress, _ := resources.MakeClusterIngress(getContext(), r, tc, tls, TestIngressClass)
 
 	for _, opt := range io {

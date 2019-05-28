@@ -57,7 +57,7 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		name: "tls-defaulting",
 		in: &ClusterIngress{
 			Spec: IngressSpec{
-				TLS: []ClusterIngressTLS{{
+				TLS: []IngressTLS{{
 					SecretNamespace: "secret-space",
 					SecretName:      "secret-name",
 				}},
@@ -65,7 +65,7 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		},
 		want: &ClusterIngress{
 			Spec: IngressSpec{
-				TLS: []ClusterIngressTLS{{
+				TLS: []IngressTLS{{
 					SecretNamespace: "secret-space",
 					SecretName:      "secret-name",
 					// Default secret keys are filled in.
@@ -79,7 +79,7 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		name: "tls-not-defaulting",
 		in: &ClusterIngress{
 			Spec: IngressSpec{
-				TLS: []ClusterIngressTLS{{
+				TLS: []IngressTLS{{
 					SecretNamespace:   "secret-space",
 					SecretName:        "secret-name",
 					ServerCertificate: "custom.tls.cert",
@@ -90,7 +90,7 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		},
 		want: &ClusterIngress{
 			Spec: IngressSpec{
-				TLS: []ClusterIngressTLS{{
+				TLS: []IngressTLS{{
 					SecretNamespace: "secret-space",
 					SecretName:      "secret-name",
 					// Default secret keys are kept intact.
@@ -104,11 +104,11 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		name: "split-timeout-retry-defaulting",
 		in: &ClusterIngress{
 			Spec: IngressSpec{
-				Rules: []ClusterIngressRule{{
-					HTTP: &HTTPClusterIngressRuleValue{
-						Paths: []HTTPClusterIngressPath{{
-							Splits: []ClusterIngressBackendSplit{{
-								ClusterIngressBackend: ClusterIngressBackend{
+				Rules: []IngressRule{{
+					HTTP: &HTTPIngressRuleValue{
+						Paths: []HTTPIngressPath{{
+							Splits: []IngressBackendSplit{{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-000",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
@@ -122,11 +122,11 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		},
 		want: &ClusterIngress{
 			Spec: IngressSpec{
-				Rules: []ClusterIngressRule{{
-					HTTP: &HTTPClusterIngressRuleValue{
-						Paths: []HTTPClusterIngressPath{{
-							Splits: []ClusterIngressBackendSplit{{
-								ClusterIngressBackend: ClusterIngressBackend{
+				Rules: []IngressRule{{
+					HTTP: &HTTPIngressRuleValue{
+						Paths: []HTTPIngressPath{{
+							Splits: []IngressBackendSplit{{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-000",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
@@ -150,18 +150,18 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		name: "split-timeout-retry-not-defaulting",
 		in: &ClusterIngress{
 			Spec: IngressSpec{
-				Rules: []ClusterIngressRule{{
-					HTTP: &HTTPClusterIngressRuleValue{
-						Paths: []HTTPClusterIngressPath{{
-							Splits: []ClusterIngressBackendSplit{{
-								ClusterIngressBackend: ClusterIngressBackend{
+				Rules: []IngressRule{{
+					HTTP: &HTTPIngressRuleValue{
+						Paths: []HTTPIngressPath{{
+							Splits: []IngressBackendSplit{{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-000",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
 								},
 								Percent: 30,
 							}, {
-								ClusterIngressBackend: ClusterIngressBackend{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-001",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
@@ -181,11 +181,11 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		},
 		want: &ClusterIngress{
 			Spec: IngressSpec{
-				Rules: []ClusterIngressRule{{
-					HTTP: &HTTPClusterIngressRuleValue{
-						Paths: []HTTPClusterIngressPath{{
-							Splits: []ClusterIngressBackendSplit{{
-								ClusterIngressBackend: ClusterIngressBackend{
+				Rules: []IngressRule{{
+					HTTP: &HTTPIngressRuleValue{
+						Paths: []HTTPIngressPath{{
+							Splits: []IngressBackendSplit{{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-000",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
@@ -193,7 +193,7 @@ func TestClusterIngressDefaulting(t *testing.T) {
 								// Percent is kept intact.
 								Percent: 30,
 							}, {
-								ClusterIngressBackend: ClusterIngressBackend{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-001",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
@@ -217,18 +217,18 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		name: "perTryTimeout-in-retry-defaulting",
 		in: &ClusterIngress{
 			Spec: IngressSpec{
-				Rules: []ClusterIngressRule{{
-					HTTP: &HTTPClusterIngressRuleValue{
-						Paths: []HTTPClusterIngressPath{{
-							Splits: []ClusterIngressBackendSplit{{
-								ClusterIngressBackend: ClusterIngressBackend{
+				Rules: []IngressRule{{
+					HTTP: &HTTPIngressRuleValue{
+						Paths: []HTTPIngressPath{{
+							Splits: []IngressBackendSplit{{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-000",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
 								},
 								Percent: 30,
 							}, {
-								ClusterIngressBackend: ClusterIngressBackend{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-001",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
@@ -247,11 +247,11 @@ func TestClusterIngressDefaulting(t *testing.T) {
 		},
 		want: &ClusterIngress{
 			Spec: IngressSpec{
-				Rules: []ClusterIngressRule{{
-					HTTP: &HTTPClusterIngressRuleValue{
-						Paths: []HTTPClusterIngressPath{{
-							Splits: []ClusterIngressBackendSplit{{
-								ClusterIngressBackend: ClusterIngressBackend{
+				Rules: []IngressRule{{
+					HTTP: &HTTPIngressRuleValue{
+						Paths: []HTTPIngressPath{{
+							Splits: []IngressBackendSplit{{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-000",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),
@@ -259,7 +259,7 @@ func TestClusterIngressDefaulting(t *testing.T) {
 								// Percent is kept intact.
 								Percent: 30,
 							}, {
-								ClusterIngressBackend: ClusterIngressBackend{
+								IngressBackend: IngressBackend{
 									ServiceName:      "revision-001",
 									ServiceNamespace: "default",
 									ServicePort:      intstr.FromInt(8080),

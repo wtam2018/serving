@@ -59,6 +59,10 @@ const (
 	// that specifies the default ClusterIngress.
 	DefaultClusterIngressClassKey = "clusteringress.class"
 
+	// ClusterIngressKey is the name of the configuration entry that
+	// specifies the whether cluster ignress is enabled or not.
+	ClusterIngressKey = "clusterIngress"
+
 	// IstioIngressClassName value for specifying knative's Istio
 	// ClusterIngress reconciler.
 	IstioIngressClassName = "istio.ingress.networking.knative.dev"
@@ -134,6 +138,9 @@ type Config struct {
 	// HTTPProtocol specifics the behavior of HTTP endpoint of Knative
 	// ingress.
 	HTTPProtocol HTTPProtocol
+
+	// ClusterIngress specifies if ClusterIngress is enabled or not.
+	ClusterIngress bool
 }
 
 // HTTPProtocol indicates a type of HTTP endpoint behavior
@@ -210,6 +217,8 @@ func NewConfigFromConfigMap(configMap *corev1.ConfigMap) (*Config, error) {
 	}
 
 	nc.AutoTLS = strings.ToLower(configMap.Data[AutoTLSKey]) == "enabled"
+
+	nc.ClusterIngress = strings.ToLower(configMap.Data[ClusterIngressKey]) == "enabled"
 
 	switch strings.ToLower(configMap.Data[HTTPProtocolKey]) {
 	case string(HTTPEnabled):

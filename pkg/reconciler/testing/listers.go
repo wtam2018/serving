@@ -150,6 +150,11 @@ func (l *Listers) GetClusterIngressLister() networkinglisters.ClusterIngressList
 	return networkinglisters.NewClusterIngressLister(l.indexerFor(&networking.ClusterIngress{}))
 }
 
+// GetIngressLister get lister for Ingress resource.
+func (l *Listers) GetIngressLister() networkinglisters.IngressLister {
+	return networkinglisters.NewIngressLister(l.indexerFor(&networking.Ingress{}))
+}
+
 // GetCertificateLister get lister for Certificate resource.
 func (l *Listers) GetCertificateLister() networkinglisters.CertificateLister {
 	return networkinglisters.NewCertificateLister(l.indexerFor(&networking.Certificate{}))

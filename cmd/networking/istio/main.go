@@ -32,11 +32,12 @@ import (
 	"github.com/knative/serving/pkg/logging"
 	"github.com/knative/serving/pkg/reconciler"
 	"github.com/knative/serving/pkg/reconciler/clusteringress"
+	"github.com/knative/serving/pkg/reconciler/ingress"
 )
 
 const (
 	threadsPerController = 2
-	component            = "controller-clusteringress-istio"
+	component            = "controller-ingress-istio"
 )
 
 var (
@@ -73,6 +74,7 @@ func main() {
 	servingInformerFactory := informers.NewSharedInformerFactory(opt.ServingClientSet, opt.ResyncPeriod)
 	sharedInformerFactory := sharedinformers.NewSharedInformerFactory(opt.SharedClientSet, opt.ResyncPeriod)
 
+	ingressInformer := servingInformerFactory.Networking().V1alpha1().Ingresses()
 	clusterIngressInformer := servingInformerFactory.Networking().V1alpha1().ClusterIngresses()
 	virtualServiceInformer := sharedInformerFactory.Networking().V1alpha3().VirtualServices()
 	gatewayInformer := sharedInformerFactory.Networking().V1alpha3().Gateways()
@@ -88,6 +90,15 @@ func main() {
 		secretInformer,
 	)
 
+	// Build our controller
+	iController := ingress.NewController(
+		opt,
+		ingressInformer,
+		virtualServiceInformer,
+		gatewayInformer,
+		secretInformer,
+	)
+
 	// Watch the logging config map and dynamically update logging levels.
 	opt.ConfigMapWatcher.Watch(logging.ConfigMapName(), logging.UpdateLevelFromConfigMap(logger, atomicLevel, component))
 	if err := opt.ConfigMapWatcher.Start(stopCh); err != nil {
@@ -98,6 +109,7 @@ func main() {
 	logger.Info("Waiting for informer caches to sync")
 	if err := controller.StartInformers(
 		stopCh,
+		ingressInformer.Informer(),
 		clusterIngressInformer.Informer(),
 		virtualServiceInformer.Informer(),
 		secretInformer.Informer(),
@@ -109,5 +121,5 @@ func main() {
 
 	// Start all of the controllers.
 	logger.Info("Starting controllers.")
-	controller.StartAll(stopCh, ciController)
+	controller.StartAll(stopCh, ciController, iController)
 }

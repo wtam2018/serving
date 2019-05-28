@@ -93,6 +93,7 @@ func main() {
 	revisionInformer := servingInformerFactory.Serving().V1alpha1().Revisions()
 	kpaInformer := servingInformerFactory.Autoscaling().V1alpha1().PodAutoscalers()
 	clusterIngressInformer := servingInformerFactory.Networking().V1alpha1().ClusterIngresses()
+	ingressInformer := servingInformerFactory.Networking().V1alpha1().Ingresses()
 	certificateInformer := servingInformerFactory.Networking().V1alpha1().Certificates()
 	sksInformer := servingInformerFactory.Networking().V1alpha1().ServerlessServices()
 	deploymentInformer := kubeInformerFactory.Apps().V1().Deployments()
@@ -127,6 +128,7 @@ func main() {
 			revisionInformer,
 			coreServiceInformer,
 			clusterIngressInformer,
+			ingressInformer,
 			certificateInformer,
 		),
 		labeler.NewRouteToConfigurationController(
@@ -165,6 +167,7 @@ func main() {
 	logger.Info("Starting informers.")
 	if err := controller.StartInformers(
 		stopCh,
+		ingressInformer.Informer(),
 		clusterIngressInformer.Informer(),
 		certificateInformer.Informer(),
 		configMapInformer.Informer(),

@@ -85,6 +85,7 @@ type Reconciler struct {
 	revisionLister       listers.RevisionLister
 	serviceLister        corev1listers.ServiceLister
 	clusterIngressLister networkinglisters.ClusterIngressLister
+	ingressLister        networkinglisters.IngressLister
 	certificateLister    networkinglisters.CertificateLister
 	configStore          configStore
 	tracker              tracker.Interface
@@ -107,10 +108,11 @@ func NewController(
 	revisionInformer servinginformers.RevisionInformer,
 	serviceInformer corev1informers.ServiceInformer,
 	clusterIngressInformer networkinginformers.ClusterIngressInformer,
+	ingressInformer networkinginformers.IngressInformer,
 	certificateInformer networkinginformers.CertificateInformer,
 ) *controller.Impl {
 	return NewControllerWithClock(opt, routeInformer, configInformer, revisionInformer,
-		serviceInformer, clusterIngressInformer, certificateInformer, system.RealClock{})
+		serviceInformer, clusterIngressInformer, ingressInformer, certificateInformer, system.RealClock{})
 }
 
 func NewControllerWithClock(
@@ -120,6 +122,7 @@ func NewControllerWithClock(
 	revisionInformer servinginformers.RevisionInformer,
 	serviceInformer corev1informers.ServiceInformer,
 	clusterIngressInformer networkinginformers.ClusterIngressInformer,
+	ingressInformer networkinginformers.IngressInformer,
 	certificateInformer networkinginformers.CertificateInformer,
 	clock system.Clock,
 ) *controller.Impl {
@@ -133,6 +136,7 @@ func NewControllerWithClock(
 		revisionLister:       revisionInformer.Lister(),
 		serviceLister:        serviceInformer.Lister(),
 		clusterIngressLister: clusterIngressInformer.Lister(),
+		ingressLister:        ingressInformer.Lister(),
 		certificateLister:    certificateInformer.Lister(),
 		clock:                clock,
 	}
@@ -147,6 +151,10 @@ func NewControllerWithClock(
 	})
 
 	clusterIngressInformer.Informer().AddEventHandler(reconciler.Handler(
+		impl.EnqueueLabelOfNamespaceScopedResource(
+			serving.RouteNamespaceLabelKey, serving.RouteLabelKey)))
+
+	ingressInformer.Informer().AddEventHandler(reconciler.Handler(
 		impl.EnqueueLabelOfNamespaceScopedResource(
 			serving.RouteNamespaceLabelKey, serving.RouteLabelKey)))
 
@@ -322,7 +330,7 @@ func (c *Reconciler) reconcile(ctx context.Context, r *v1alpha1.Route) error {
 		return err
 	}
 
-	tls := []netv1alpha1.ClusterIngressTLS{}
+	tls := []netv1alpha1.IngressTLS{}
 	if config.FromContext(ctx).Network.AutoTLS && !resources.IsClusterLocal(r) {
 		allDomains, err := domains.GetAllDomains(ctx, r, getTrafficNames(traffic.Targets))
 		if err != nil {
@@ -353,8 +361,29 @@ func (c *Reconciler) reconcile(ctx context.Context, r *v1alpha1.Route) error {
 		tls = append(tls, resources.MakeClusterIngressTLS(cert, allDomains))
 	}
 
+	if config.FromContext(ctx).Network.ClusterIngress {
+		if err := c.reconcileClusterIngres(ctx, r, traffic, tls, services); err != nil {
+			return err
+		}
+
+	} else {
+		if err := c.reconcileNamespacedIngress(ctx, r, traffic, tls, services); err != nil {
+			return err
+		}
+	}
+
+	r.Status.ObservedGeneration = r.Generation
+	logger.Info("Route successfully synced")
+	return nil
+}
+
+func (c *Reconciler) reconcileClusterIngres(ctx context.Context, r *v1alpha1.Route, traffic *tr.Config,
+	tls []netv1alpha1.IngressTLS, services []*corev1.Service) error {
+	logger := logging.FromContext(ctx)
+
 	logger.Info("Creating ClusterIngress.")
 	desired, err := resources.MakeClusterIngress(ctx, r, traffic, tls, ingressClassForRoute(ctx, r))
+
 	if err != nil {
 		return err
 	}
@@ -362,15 +391,40 @@ func (c *Reconciler) reconcile(ctx context.Context, r *v1alpha1.Route) error {
 	if err != nil {
 		return err
 	}
-	r.Status.PropagateClusterIngressStatus(clusterIngress.Status)
+	r.Status.PropagateIngressStatus(clusterIngress.Status)
 
 	logger.Info("Updating placeholder k8s services with clusterIngress information")
 	if err := c.updatePlaceholderServices(ctx, r, services, clusterIngress); err != nil {
 		return err
 	}
 
-	r.Status.ObservedGeneration = r.Generation
-	logger.Info("Route successfully synced")
+	return nil
+}
+
+func (c *Reconciler) reconcileNamespacedIngress(ctx context.Context, r *v1alpha1.Route, traffic *tr.Config,
+	tls []netv1alpha1.IngressTLS, services []*corev1.Service) error {
+
+	logger := logging.FromContext(ctx)
+
+	logger.Info("Creating Ingress.")
+	desired, err := resources.MakeIngress(ctx, r, traffic, tls, ingressClassForRoute(ctx, r))
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Reconciling Ingress.")
+	ingress, err := c.reconcileIngress(ctx, r, desired)
+	if err != nil {
+		return err
+	}
+
+	r.Status.PropagateIngressStatus(ingress.Status)
+
+	logger.Info("Updating placeholder k8s services with ingress information")
+	if err := c.updateIngressPlaceholderServices(ctx, r, services, ingress); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -383,9 +437,9 @@ func (c *Reconciler) reconcileDeletion(ctx context.Context, r *v1alpha1.Route) e
 		return nil
 	}
 
-	// Delete the ClusterIngress resources for this Route.
-	logger.Info("Cleaning up ClusterIngress")
-	if err := c.deleteClusterIngressesForRoute(r); err != nil {
+	// Delete the Ingress resources for this Route.
+	logger.Info("Cleaning up Ingress")
+	if err := c.deleteIngressesForRoute(r); err != nil {
 		return err
 	}
 
@@ -446,7 +500,6 @@ func (c *Reconciler) configureTraffic(ctx context.Context, r *v1alpha1.Route) (*
 	}
 
 	r.Status.MarkTrafficAssigned()
-
 	return t, nil
 }
 

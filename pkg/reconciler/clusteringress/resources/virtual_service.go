@@ -54,7 +54,7 @@ func MakeVirtualService(ci *v1alpha1.ClusterIngress, gateways []string) *v1alpha
 	if vs.Labels == nil {
 		vs.Labels = make(map[string]string)
 	}
-	vs.Labels[networking.IngressLabelKey] = ci.Name
+	vs.Labels[networking.ClusterIngressLabelKey] = ci.Name
 
 	ingressLabels := ci.Labels
 	vs.Labels[serving.RouteLabelKey] = ingressLabels[serving.RouteLabelKey]
@@ -93,7 +93,7 @@ func makePortSelector(ios intstr.IntOrString) v1alpha3.PortSelector {
 	}
 }
 
-func makeVirtualServiceRoute(hosts []string, http *v1alpha1.HTTPClusterIngressPath) *v1alpha3.HTTPRoute {
+func makeVirtualServiceRoute(hosts []string, http *v1alpha1.HTTPIngressPath) *v1alpha3.HTTPRoute {
 	matches := []v1alpha3.HTTPMatchRequest{}
 	for _, host := range expandedHosts(hosts) {
 		matches = append(matches, makeMatch(host, http.Path))

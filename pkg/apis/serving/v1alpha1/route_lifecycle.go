@@ -145,10 +145,10 @@ func (rs *RouteStatus) MarkCertificateNotOwned(name string) {
 	})
 }
 
-// PropagateClusterIngressStatus update RouteConditionIngressReady condition
+// PropagateIngressStatus update RouteConditionIngressReady condition
 // in RouteStatus according to IngressStatus.
-func (rs *RouteStatus) PropagateClusterIngressStatus(cs v1alpha1.IngressStatus) {
-	cc := cs.GetCondition(v1alpha1.ClusterIngressConditionReady)
+func (rs *RouteStatus) PropagateIngressStatus(cs v1alpha1.IngressStatus) {
+	cc := cs.GetCondition(v1alpha1.IngressConditionReady)
 	if cc == nil {
 		return
 	}

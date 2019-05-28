@@ -61,7 +61,7 @@ func TestNewMakeK8SService(t *testing.T) {
 	scenarios := map[string]struct {
 		// Inputs
 		route        *v1alpha1.Route
-		ingress      *netv1alpha1.ClusterIngress
+		ingress      *netv1alpha1.Ingress
 		targetName   string
 		expectedSpec corev1.ServiceSpec
 		expectedMeta metav1.ObjectMeta
@@ -69,7 +69,7 @@ func TestNewMakeK8SService(t *testing.T) {
 	}{
 		"no-loadbalancer": {
 			route: r,
-			ingress: &netv1alpha1.ClusterIngress{
+			ingress: &netv1alpha1.Ingress{
 				Status: netv1alpha1.IngressStatus{},
 			},
 			expectedMeta: expectedMeta,
@@ -77,7 +77,7 @@ func TestNewMakeK8SService(t *testing.T) {
 		},
 		"empty-loadbalancer": {
 			route: r,
-			ingress: &netv1alpha1.ClusterIngress{
+			ingress: &netv1alpha1.Ingress{
 				Status: netv1alpha1.IngressStatus{
 					LoadBalancer: &netv1alpha1.LoadBalancerStatus{
 						Ingress: []netv1alpha1.LoadBalancerIngressStatus{{}},
@@ -89,7 +89,7 @@ func TestNewMakeK8SService(t *testing.T) {
 		},
 		"multi-loadbalancer": {
 			route: r,
-			ingress: &netv1alpha1.ClusterIngress{
+			ingress: &netv1alpha1.Ingress{
 				Status: netv1alpha1.IngressStatus{
 					LoadBalancer: &netv1alpha1.LoadBalancerStatus{
 						Ingress: []netv1alpha1.LoadBalancerIngressStatus{{
@@ -105,7 +105,7 @@ func TestNewMakeK8SService(t *testing.T) {
 		},
 		"ingress-with-domain": {
 			route: r,
-			ingress: &netv1alpha1.ClusterIngress{
+			ingress: &netv1alpha1.Ingress{
 				Status: netv1alpha1.IngressStatus{
 					LoadBalancer: &netv1alpha1.LoadBalancerStatus{
 						Ingress: []netv1alpha1.LoadBalancerIngressStatus{{Domain: "domain.com"}},
@@ -120,7 +120,7 @@ func TestNewMakeK8SService(t *testing.T) {
 		},
 		"ingress-with-domaininternal": {
 			route: r,
-			ingress: &netv1alpha1.ClusterIngress{
+			ingress: &netv1alpha1.Ingress{
 				Status: netv1alpha1.IngressStatus{
 					LoadBalancer: &netv1alpha1.LoadBalancerStatus{
 						Ingress: []netv1alpha1.LoadBalancerIngressStatus{{DomainInternal: "istio-ingressgateway.istio-system.svc.cluster.local"}},
@@ -135,7 +135,7 @@ func TestNewMakeK8SService(t *testing.T) {
 		},
 		"ingress-with-only-mesh": {
 			route: r,
-			ingress: &netv1alpha1.ClusterIngress{
+			ingress: &netv1alpha1.Ingress{
 				Status: netv1alpha1.IngressStatus{
 					LoadBalancer: &netv1alpha1.LoadBalancerStatus{
 						Ingress: []netv1alpha1.LoadBalancerIngressStatus{{MeshOnly: true}},
@@ -154,7 +154,7 @@ func TestNewMakeK8SService(t *testing.T) {
 		"with-target-name-specified": {
 			route:      r,
 			targetName: "my-target-name",
-			ingress: &netv1alpha1.ClusterIngress{
+			ingress: &netv1alpha1.Ingress{
 				Status: netv1alpha1.IngressStatus{
 					LoadBalancer: &netv1alpha1.LoadBalancerStatus{
 						Ingress: []netv1alpha1.LoadBalancerIngressStatus{{MeshOnly: true}},
